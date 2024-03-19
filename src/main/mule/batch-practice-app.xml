@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="07f3613a-b3c5-407e-ac4a-427beed2010e" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="batch-practice-appFlow" doc:id="2e3b0c24-f600-40d9-9b65-18d036dcd77b" >
+		<http:listener doc:name="Listener" doc:id="197682ae-bf8f-4a91-9cae-d43a56c5b30b" config-ref="HTTP_Listener_config" path="/batch-practice"/>
+		<set-payload value='#[[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,"a","b","c","d","e"]]' doc:name="[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]" doc:id="beaa4664-b706-4c1f-845c-fa3ad464cb9f" />
+		<batch:job jobName="batch-practice-appBatch_Job" doc:id="de231c93-72dd-4d91-bb83-8fa3d663dc31" blockSize="5" maxFailedRecords="3">
+			<batch:process-records >
+				<batch:step name="Batch_Step" doc:id="9f617a32-0691-45ec-bac0-8f530252e46c" acceptExpression="#[payload &lt; 10]" acceptPolicy="ALL">
+					<logger level="INFO" doc:name="Logger" doc:id="c2cae0be-568c-4f8a-99bf-24913fc10104" message='#[{"step1" : payload}]'/>
+					<ee:transform doc:name="Transform Message" doc:id="94cf00a6-5eac-44a4-a6d5-37d48b54bbe3" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</batch:step>
+				<batch:step name="Batch_Step1" doc:id="215673a3-f619-4846-bead-bf76f31d648e" acceptExpression="#[payload &gt; 10]">
+					<logger level="INFO" doc:name="Logger" doc:id="7e06f9ad-b111-4098-9f44-25004488eb2e" message='#[{"step2" : payload}]'/>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Logger" doc:id="b220d7e7-0680-44b0-8ab6-705e9f4357c2" message="#[payload]"/>
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+	<flow name="batch-practice-appFlow1" doc:id="b9cadbdb-39a8-4338-9060-8301e3b2ff77" >
+		<http:listener doc:name="Listener" doc:id="07a7a1ea-0870-454b-88a6-17e7c4e656cc" config-ref="HTTP_Listener_config" path="/batch-fail"/>
+		<set-payload value='#[[1,2,3,4,5,"a","b","c","d"]]' doc:name="Set Payload" doc:id="f6609da6-0fbb-4cc0-aa2e-414df841d898" />
+		<batch:job jobName="batch-practice-appBatch_Job1" doc:id="36d77ba1-af29-4bf5-8a64-dd77e662059d" >
+			<batch:process-records >
+				<batch:step name="Batch_Step2" doc:id="1a7a4da2-5809-4d58-9bb3-24d92e89d09a">
+					<logger level="INFO" doc:name="Logger" doc:id="440da581-fe1d-4201-b806-fab277dac598" message='#[{"step2" : payload}]'/>
+				</batch:step>
+				<batch:step name="Batch_Step3" doc:id="30dc67d2-1b9d-4ece-92a6-4836434e7098" acceptPolicy="ALL">
+					<logger level="INFO" doc:name="Logger" doc:id="88a0d5b0-aadb-45fc-93eb-7c82d675d697" message='#[{"step3" : payload}]'/>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Logger" doc:id="e0515d98-66f7-4e5e-adcc-db00f90792b3" message="#[payload]"/>
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+</mule>
